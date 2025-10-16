@@ -4,14 +4,14 @@ import { Github, Twitter, MessageCircle } from 'lucide-react'
 
 const quickLinks = [
   { name: 'WhatsApp Bot', href: 'https://wa.me/' },
-  { name: 'Documentation', href: '#' },
-  { name: 'GitHub', href: '#' },
+  { name: 'Documentation', href: 'https://stacksave.gitbook.io/stacksave-docs' },
+  { name: 'GitHub', href: 'https://github.com/stacksave' },
 ]
 
 const socialLinks = [
-  { name: 'GitHub', icon: Github, href: '#' },
-  { name: 'Twitter', icon: Twitter, href: '#' },
-  { name: 'Discord', icon: MessageCircle, href: '#' },
+  { name: 'GitHub', icon: Github, href: 'https://github.com/stacksave' },
+  { name: 'Twitter', icon: Twitter, href: 'https://twitter.com/StackSaveApp' },
+  { name: 'Discord', icon: MessageCircle, href: 'https://t.me/stacksave' },
 ]
 
 export function Footer() {
@@ -33,6 +33,8 @@ export function Footer() {
                 <a
                   key={social.name}
                   href={social.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="text-black hover:text-gray-600 transition-colors"
                   aria-label={social.name}
                 >
@@ -50,6 +52,8 @@ export function Footer() {
                 <li key={link.name}>
                   <a
                     href={link.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="text-sm text-gray-600 hover:text-black transition-colors"
                   >
                     {link.name}

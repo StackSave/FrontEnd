@@ -1,0 +1,394 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+import { motion } from 'framer-motion'
+import { ArrowRight, TrendingUp, Shield, Zap } from 'lucide-react'
+import Link from 'next/link'
+import { Card } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { strategiesApi, type Strategy } from '@/lib/api'
+
+// Icon and UI configuration by strategy name
+const strategyConfig = {
+  conservative: {
+    icon: Shield,
+    color: 'text-blue-600',
+    bgColor: 'bg-blue-50',
+    features: [
+      'No lock period',
+      'Instant withdrawal',
+      'Lowest risk',
+      'Stable returns'
+    ]
+  },
+  balanced: {
+    icon: TrendingUp,
+    color: 'text-purple-600',
+    bgColor: 'bg-purple-50',
+    features: [
+      '7-day lock period',
+      'Medium risk',
+      'Diversified allocation',
+      'Higher returns'
+    ]
+  },
+  growth: {
+    icon: Zap,
+    color: 'text-orange-600',
+    bgColor: 'bg-orange-50',
+    features: [
+      '30-day lock period',
+      'Highest returns',
+      'Multi-protocol',
+      'Leveraged strategies'
+    ]
+  }
+} as const
+
+const strategyDescriptions = {
+  conservative: 'Perfect for emergency funds. Withdraw anytime with stable returns.',
+  balanced: 'Optimal balance of returns and flexibility for short-term goals.',
+  growth: 'Maximum returns for long-term wealth building. Best performance.'
+}
+
+const fadeInUp = {
+  initial: { opacity: 0, y: 20 },
+  animate: { opacity: 1, y: 0 },
+  transition: { duration: 0.5 }
+}
+
+const stagger = {
+  animate: {
+    transition: {
+      staggerChildren: 0.1
+    }
+  }
+}
+
+export default function EarnPage() {
+  const [strategies, setStrategies] = useState<Strategy[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchStrategies = async () => {
+      try {
+        setLoading(true)
+        const data = await strategiesApi.getAll()
+        setStrategies(data)
+        setError(null)
+      } catch (err) {
+        console.error('Error fetching strategies:', err)
+        setError('Failed to load strategies. Please try again later.')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchStrategies()
+  }, [])
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-black border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-gray-600">Loading strategies...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center max-w-md px-4">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <span className="text-3xl">⚠️</span>
+          </div>
+          <h2 className="text-2xl font-bold mb-2 text-black">Error Loading Data</h2>
+          <p className="text-gray-600 mb-6">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-6 py-3 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen bg-white">
+      {/* Header */}
+      <section className="border-b border-black py-12 md:py-20">
+        <div className="container px-4 md:px-6">
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="max-w-3xl"
+          >
+            <Badge className="mb-4 bg-black text-white hover:bg-black/90">
+              TESTNET
+            </Badge>
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 text-black">
+              Start Earning on Your Savings
+            </h1>
+            <p className="text-xl text-gray-600 mb-6">
+              Choose a strategy that fits your goals. Get free testnet IDRX to try it out risk-free.
+            </p>
+            <div className="flex flex-wrap gap-4">
+              <Link href="#faucet">
+                <button className="px-6 py-3 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors">
+                  Get Free Testnet Tokens
+                </button>
+              </Link>
+              <a
+                href="https://stacksave.gitbook.io/stacksave-docs"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <button className="px-6 py-3 border-2 border-black text-black rounded-lg hover:bg-black hover:text-white transition-colors">
+                  Learn More
+                </button>
+              </a>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Strategy Cards */}
+      <section className="py-12 md:py-20">
+        <div className="container px-4 md:px-6">
+          <motion.div
+            variants={stagger}
+            initial="initial"
+            animate="animate"
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+          >
+            {strategies.map((strategy) => {
+              const config = strategyConfig[strategy.name as keyof typeof strategyConfig]
+              const Icon = config?.icon || Shield
+              const description = strategyDescriptions[strategy.name as keyof typeof strategyDescriptions] || strategy.displayName
+
+              // Format lock period
+              const lockPeriodText = strategy.lockPeriod === 0 ? 'None' : `${strategy.lockPeriod} days`
+
+              // Get unique protocol names
+              const protocolNames = strategy.protocols.map(sp => sp.protocol.displayName)
+
+              return (
+                <motion.div key={strategy.id} variants={fadeInUp}>
+                  <Card className="border-2 border-black hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+                    <div className="p-6">
+                      {/* Header */}
+                      <div className="flex items-start justify-between mb-4">
+                        <div className={`p-3 rounded-lg ${config?.bgColor || 'bg-gray-50'}`}>
+                          <Icon className={`h-6 w-6 ${config?.color || 'text-gray-600'}`} />
+                        </div>
+                        <Badge variant="outline" className="border-black">
+                          {strategy.riskLevel} Risk
+                        </Badge>
+                      </div>
+
+                      {/* Title & APY */}
+                      <h3 className="text-2xl font-bold mb-2 text-black">
+                        {strategy.displayName}
+                      </h3>
+                      <div className="mb-4">
+                        <div className="flex items-baseline gap-2">
+                          <span className={`text-4xl font-bold ${config?.color || 'text-gray-600'}`}>
+                            {strategy.apyCurrent.toFixed(2)}%
+                          </span>
+                          <span className="text-gray-600">APY</span>
+                        </div>
+                        <div className="text-xs text-gray-500 mt-1">
+                          Range: {strategy.apyMin}-{strategy.apyMax}%
+                        </div>
+                      </div>
+
+                      {/* Description */}
+                      <p className="text-gray-600 mb-6">
+                        {description}
+                      </p>
+
+                      {/* Details */}
+                      <div className="space-y-3 mb-6">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-600">Lock Period</span>
+                          <span className="font-medium text-black">
+                            {lockPeriodText}
+                          </span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-600">Min. Deposit</span>
+                          <span className="font-medium text-black">
+                            Rp {strategy.minDeposit.toLocaleString('id-ID')}
+                          </span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-600">Protocols</span>
+                          <span className="font-medium text-black">
+                            {strategy.protocols.length}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Features */}
+                      <div className="mb-6">
+                        <p className="text-xs font-medium text-gray-600 mb-2 uppercase tracking-wide">
+                          Features
+                        </p>
+                        <ul className="space-y-1">
+                          {config?.features.map((feature, idx) => (
+                            <li key={idx} className="flex items-center gap-2 text-sm text-gray-600">
+                              <div className="w-1.5 h-1.5 rounded-full bg-black" />
+                              {feature}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+
+                      {/* CTA */}
+                      <Link href={`/earn/deposit?strategy=${strategy.name}`}>
+                        <button className="w-full px-4 py-3 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors flex items-center justify-center gap-2 group">
+                          <span>Deposit Now</span>
+                          <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                        </button>
+                      </Link>
+                    </div>
+                  </Card>
+                </motion.div>
+              )
+            })}
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Faucet Section */}
+      <section id="faucet" className="py-12 md:py-20 bg-gray-50 border-y border-black">
+        <div className="container px-4 md:px-6">
+          <div className="max-w-2xl mx-auto text-center">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+            >
+              <h2 className="text-3xl md:text-4xl font-bold mb-4 text-black">
+                Get Free Testnet Tokens
+              </h2>
+              <p className="text-lg text-gray-600 mb-8">
+                Try out our vaults with free IDRX on Base Sepolia testnet. No real money needed.
+              </p>
+
+              <Card className="border-2 border-black p-6 md:p-8 text-left">
+                <div className="space-y-6">
+                  <div>
+                    <label className="block text-sm font-medium mb-2 text-black">
+                      Your Wallet Address
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        placeholder="0x..."
+                        className="flex-1 px-4 py-3 border-2 border-black rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                      />
+                      <button className="px-6 py-3 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors whitespace-nowrap">
+                        Connect Wallet
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="bg-white border-2 border-black rounded-lg p-4">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="font-medium text-black">Testnet IDRX</span>
+                      <span className="text-2xl font-bold text-black">10,000</span>
+                    </div>
+                    <p className="text-sm text-gray-600">
+                      Receive 10,000 IDRX per request. Request once every 24 hours.
+                    </p>
+                  </div>
+
+                  <button className="w-full px-6 py-4 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors font-medium text-lg">
+                    Request Testnet Tokens
+                  </button>
+
+                  <div className="text-center">
+                    <p className="text-sm text-gray-600">
+                      Need help?{' '}
+                      <a
+                        href="https://stacksave.gitbook.io/stacksave-docs"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-black hover:underline font-medium"
+                      >
+                        Read the documentation
+                      </a>
+                    </p>
+                  </div>
+                </div>
+              </Card>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* How It Works */}
+      <section className="py-12 md:py-20">
+        <div className="container px-4 md:px-6">
+          <div className="max-w-3xl mx-auto">
+            <h2 className="text-3xl md:text-4xl font-bold mb-12 text-center text-black">
+              How It Works
+            </h2>
+            <div className="space-y-8">
+              {[
+                {
+                  step: '01',
+                  title: 'Get Testnet Tokens',
+                  description: 'Connect your wallet and claim free IDRX tokens to test the platform.'
+                },
+                {
+                  step: '02',
+                  title: 'Choose Strategy',
+                  description: 'Select a savings strategy based on your risk tolerance and time horizon.'
+                },
+                {
+                  step: '03',
+                  title: 'Deposit Funds',
+                  description: 'Deposit your tokens into the vault. Funds are automatically allocated across DeFi protocols.'
+                },
+                {
+                  step: '04',
+                  title: 'Earn Returns',
+                  description: 'Watch your balance grow with daily auto-compounding. Withdraw anytime after lock period.'
+                }
+              ].map((item, idx) => (
+                <motion.div
+                  key={idx}
+                  initial={{ opacity: 0, x: -20 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: idx * 0.1 }}
+                  className="flex gap-6"
+                >
+                  <div className="flex-shrink-0">
+                    <div className="w-12 h-12 rounded-full bg-black text-white flex items-center justify-center font-bold">
+                      {item.step}
+                    </div>
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold mb-2 text-black">{item.title}</h3>
+                    <p className="text-gray-600">{item.description}</p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  )
+}

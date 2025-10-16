@@ -20,7 +20,9 @@ export function Header() {
           {/* Desktop Right Side */}
           <div className="hidden md:flex items-center gap-6">
             <a
-              href="#"
+              href="https://stacksave.gitbook.io/stacksave-docs"
+              target="_blank"
+              rel="noopener noreferrer"
               className="text-sm font-medium text-gray-600 hover:text-black transition-colors"
             >
               Docs
@@ -46,7 +48,9 @@ export function Header() {
         {mobileMenuOpen && (
           <div className="md:hidden py-4 space-y-4">
             <a
-              href="#"
+              href="https://stacksave.gitbook.io/stacksave-docs"
+              target="_blank"
+              rel="noopener noreferrer"
               className="block text-sm font-medium text-gray-600 hover:text-black transition-colors py-2"
               onClick={() => setMobileMenuOpen(false)}
             >

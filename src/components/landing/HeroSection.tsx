@@ -2,7 +2,13 @@
 
 import { motion } from 'framer-motion'
 import { ArrowRight } from 'lucide-react'
-import { BlockchainVisual } from './BlockchainVisual'
+import dynamic from 'next/dynamic'
+import Link from 'next/link'
+
+const BlockchainVisual = dynamic(
+  () => import('./BlockchainVisual').then((mod) => ({ default: mod.BlockchainVisual })),
+  { ssr: false }
+)
 
 export function HeroSection() {
   return (
@@ -38,15 +44,13 @@ export function HeroSection() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
             >
-              <a
-                href="https://wa.me/"
-                target="_blank"
-                rel="noopener noreferrer"
+              <Link
+                href="/earn"
                 className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg border-2 border-black hover:bg-black hover:text-white transition-colors"
               >
                 Get Started
                 <ArrowRight className="h-4 w-4" />
-              </a>
+              </Link>
             </motion.div>
           </div>
 

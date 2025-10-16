@@ -39,3 +39,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# documentation (moved to separate repo)
+# Uncomment the line below after migrating docs to separate repository
+# /docs/
