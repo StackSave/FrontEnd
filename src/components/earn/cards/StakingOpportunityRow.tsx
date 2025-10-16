@@ -4,8 +4,9 @@ import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { TrendingUp, Lock, Flame } from 'lucide-react'
 import Link from 'next/link'
-import { RewardCalculator } from './RewardCalculator'
+import { RewardCalculator } from '../forms'
 import type { Strategy, Protocol } from '@/lib/api'
+import { getCoinMetadata } from '@/lib/constants'
 
 interface StakingOpportunityRowProps {
   data: Strategy | Protocol
@@ -35,6 +36,9 @@ export function StakingOpportunityRow({
   const category = isStrategy ? strategy!.category : protocol!.category
   const isHot = isStrategy ? strategy!.isHot : false
 
+  // Get coin metadata for strategies
+  const coinMeta = isStrategy ? getCoinMetadata(strategy!.name) : null
+
   const href = isStrategy
     ? `/earn/deposit?strategy=${strategy!.name}`
     : `/earn/protocol/${protocol!.name}`
@@ -54,14 +58,22 @@ export function StakingOpportunityRow({
           <div className="flex items-center gap-4 min-w-0 flex-1">
             {/* Logo */}
             <div className="flex-shrink-0">
-              {protocol?.logo ? (
+              {isStrategy && coinMeta?.logo ? (
+                <img
+                  src={coinMeta.logo}
+                  alt={coinMeta.name}
+                  className="w-12 h-12 rounded-full"
+                />
+              ) : protocol?.logo ? (
                 <img
                   src={protocol.logo}
                   alt={displayName}
                   className="w-12 h-12 rounded-full"
                 />
               ) : (
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                <div className={`w-12 h-12 rounded-full bg-gradient-to-br ${
+                  isStrategy && coinMeta ? coinMeta.gradient : 'from-blue-500 to-purple-600'
+                } flex items-center justify-center`}>
                   <span className="text-white font-bold text-lg">
                     {displayName.charAt(0)}
                   </span>

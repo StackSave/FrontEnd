@@ -2,10 +2,11 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Compass, Wallet, Vault, Building2 } from 'lucide-react'
+import { Compass, Droplets, Wallet, Vault, Building2 } from 'lucide-react'
 
 const tabs = [
   { name: 'Explore', href: '/earn/explore', icon: Compass },
+  { name: 'Faucet', href: '/earn/faucet', icon: Droplets },
   { name: 'Deposit', href: '/earn/deposit', icon: Wallet },
   { name: 'Vault', href: '/earn/vault', icon: Vault },
   { name: 'Protocol', href: '/earn/protocol', icon: Building2 },

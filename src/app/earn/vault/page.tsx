@@ -2,18 +2,12 @@
 
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Filter } from 'lucide-react'
 import { strategiesApi, type Strategy } from '@/lib/api'
 import { VaultCard } from '@/components/earn/cards'
 import { fadeInUp, stagger } from '@/lib/constants'
 
-type RiskFilter = 'All' | 'Low' | 'Medium' | 'Higher'
-
 export default function VaultPage() {
   const [vaults, setVaults] = useState<Strategy[]>([])
-  const [filteredVaults, setFilteredVaults] = useState<Strategy[]>([])
-  const [riskFilter, setRiskFilter] = useState<RiskFilter>('All')
-  const [sortBy, setSortBy] = useState<'apy' | 'tvl' | 'name'>('apy')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -22,12 +16,26 @@ export default function VaultPage() {
       try {
         setLoading(true)
         const data = await strategiesApi.getAll()
-        setVaults(data)
-        setFilteredVaults(data)
-        setError(null)
-      } catch (err) {
+
+        if (data.length === 0) {
+          setError('No vaults found in database. Please seed the database:\n\n1. cd backend\n2. npm run prisma:reset')
+        } else {
+          setVaults(data)
+          setError(null)
+        }
+      } catch (err: any) {
         console.error('Error fetching vaults:', err)
-        setError('Failed to load vaults. Please try again later.')
+
+        // Better error messages based on error type
+        if (err.message?.includes('Network error') || err.message?.includes('Failed to fetch')) {
+          setError('Cannot connect to backend server.\n\nPlease ensure:\n1. Backend is running: cd backend && npm run dev\n2. Backend URL is correct: http://localhost:3001')
+        } else if (err.status === 404) {
+          setError('Vaults API endpoint not found.\n\nPlease check:\n1. Backend routes are configured\n2. API endpoint exists at /api/strategies')
+        } else if (err.status === 500) {
+          setError('Backend server error.\n\nPlease check:\n1. Database is accessible\n2. Backend console for error logs')
+        } else {
+          setError(`Failed to load vaults: ${err.message || 'Unknown error'}\n\nTry:\n1. Check browser console (F12)\n2. Check backend is running\n3. Refresh the page`)
+        }
       } finally {
         setLoading(false)
       }
@@ -35,24 +43,6 @@ export default function VaultPage() {
 
     fetchVaults()
   }, [])
-
-  useEffect(() => {
-    let filtered = [...vaults]
-
-    // Filter by risk level
-    if (riskFilter !== 'All') {
-      filtered = filtered.filter(v => v.riskLevel === riskFilter)
-    }
-
-    // Sort
-    filtered.sort((a, b) => {
-      if (sortBy === 'apy') return b.apyCurrent - a.apyCurrent
-      if (sortBy === 'tvl') return b.tvl - a.tvl
-      return a.displayName.localeCompare(b.displayName)
-    })
-
-    setFilteredVaults(filtered)
-  }, [vaults, riskFilter, sortBy])
 
   if (loading) {
     return (
@@ -67,19 +57,32 @@ export default function VaultPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="text-center max-w-md px-4">
+      <div className="min-h-screen bg-white flex items-center justify-center p-4">
+        <div className="text-center max-w-2xl">
           <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <span className="text-3xl">⚠️</span>
           </div>
-          <h2 className="text-2xl font-bold mb-2 text-black">Error Loading Vaults</h2>
-          <p className="text-gray-600 mb-6">{error}</p>
-          <button
-            onClick={() => window.location.reload()}
-            className="px-6 py-3 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors"
-          >
-            Retry
-          </button>
+          <h2 className="text-2xl font-bold mb-4 text-black">Cannot Load Vaults</h2>
+          <div className="bg-gray-50 border-2 border-gray-200 rounded-lg p-6 mb-6 text-left">
+            <pre className="text-sm text-gray-700 whitespace-pre-wrap font-mono">{error}</pre>
+          </div>
+          <div className="flex gap-3 justify-center">
+            <button
+              onClick={() => window.location.reload()}
+              className="px-6 py-3 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors"
+            >
+              Retry Connection
+            </button>
+            <button
+              onClick={() => window.open('http://localhost:3001/api/strategies', '_blank')}
+              className="px-6 py-3 border-2 border-black text-black rounded-lg hover:bg-gray-100 transition-colors"
+            >
+              Test API Directly
+            </button>
+          </div>
+          <p className="mt-4 text-xs text-gray-500">
+            Check browser console (F12) for detailed error logs
+          </p>
         </div>
       </div>
     )
@@ -103,87 +106,43 @@ export default function VaultPage() {
           </p>
         </motion.div>
 
-        {/* Filters */}
-        <div className="flex flex-col sm:flex-row justify-between gap-4 mb-8">
-          {/* Risk Filter */}
-          <div className="flex items-center gap-2">
-            <Filter className="h-5 w-5 text-gray-600" />
-            <span className="text-sm font-medium text-gray-700">Risk Level:</span>
-            <div className="flex gap-2">
-              {(['All', 'Low', 'Medium', 'Higher'] as RiskFilter[]).map((risk) => (
-                <button
-                  key={risk}
-                  onClick={() => setRiskFilter(risk)}
-                  className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
-                    riskFilter === risk
-                      ? 'bg-black text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  {risk}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Sort */}
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-gray-700">Sort by:</span>
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as 'apy' | 'tvl' | 'name')}
-              className="px-3 py-1 border-2 border-black rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-black"
-            >
-              <option value="apy">Highest APY</option>
-              <option value="tvl">Highest TVL</option>
-              <option value="name">Name</option>
-            </select>
-          </div>
-        </div>
-
-        {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <div className="p-4 border-2 border-black rounded-lg">
-            <p className="text-sm text-gray-600 mb-1">Total Vaults</p>
-            <p className="text-2xl font-bold text-black">{filteredVaults.length}</p>
-          </div>
-          <div className="p-4 border-2 border-black rounded-lg">
-            <p className="text-sm text-gray-600 mb-1">Avg APY</p>
-            <p className="text-2xl font-bold text-black">
-              {(filteredVaults.reduce((sum, v) => sum + v.apyCurrent, 0) / filteredVaults.length || 0).toFixed(2)}%
-            </p>
-          </div>
-          <div className="p-4 border-2 border-black rounded-lg">
-            <p className="text-sm text-gray-600 mb-1">Total TVL</p>
-            <p className="text-2xl font-bold text-black">
-              ${(filteredVaults.reduce((sum, v) => sum + v.tvl, 0) / 1000000).toFixed(2)}M
-            </p>
-          </div>
-          <div className="p-4 border-2 border-black rounded-lg">
-            <p className="text-sm text-gray-600 mb-1">Hot Vaults</p>
-            <p className="text-2xl font-bold text-black">
-              {filteredVaults.filter(v => v.isHot).length}
-            </p>
-          </div>
-        </div>
-
-        {/* Vaults Grid */}
-        {filteredVaults.length > 0 ? (
+        {/* Vaults List */}
+        {vaults.length > 0 ? (
           <motion.div
             variants={stagger}
             initial="initial"
             animate="animate"
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+            className="space-y-4"
           >
-            {filteredVaults.map((vault) => (
+            {vaults.map((vault) => (
               <motion.div key={vault.id} variants={fadeInUp}>
-                <VaultCard vault={vault} />
+                <VaultCard vault={vault} layout="horizontal" />
               </motion.div>
             ))}
           </motion.div>
         ) : (
-          <div className="text-center py-12 text-gray-500">
-            No vaults found matching your criteria
+          <div className="text-center py-12">
+            <div className="max-w-md mx-auto">
+              <div className="text-6xl mb-4">🔍</div>
+              <h3 className="text-xl font-bold text-black mb-2">
+                No Vaults Found
+              </h3>
+              <p className="text-gray-600 mb-4">
+                Database is empty. Run seed command to add vaults.
+              </p>
+              <div className="bg-yellow-50 border-2 border-yellow-300 rounded-lg p-4 text-left">
+                <p className="font-bold text-yellow-900 mb-2">🚀 Quick Fix:</p>
+                <pre className="text-xs text-yellow-800 font-mono whitespace-pre-wrap">
+                  {`cd backend
+npm run prisma:reset
+
+This will:
+1. Reset the database
+2. Seed with 8 vaults
+3. Add working logo URLs`}
+                </pre>
+              </div>
+            </div>
           </div>
         )}
       </div>

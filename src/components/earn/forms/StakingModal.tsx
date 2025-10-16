@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { X, ChevronLeft, ChevronRight } from 'lucide-react'
 import type { Strategy } from '@/lib/api'
+import { getCoinMetadata } from '@/lib/constants'
 
 interface StakingModalProps {
   isOpen: boolean
@@ -21,6 +22,9 @@ export function StakingModal({ isOpen, onClose, strategy }: StakingModalProps) {
   const quota = '10,000' // Mock quota
 
   if (!isOpen || !strategy) return null
+
+  // Get coin metadata for icon display
+  const coinMeta = getCoinMetadata(strategy.name)
 
   const apy = lockPeriod === 'flexible' ? strategy.apyCurrent : strategy.apyCurrent + 0.5
   const minAmount = 0.1
@@ -95,6 +99,27 @@ export function StakingModal({ isOpen, onClose, strategy }: StakingModalProps) {
 
           {/* Content */}
           <div className="p-6">
+            {/* Strategy Info with Coin Icon */}
+            <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-200">
+              {coinMeta.logo ? (
+                <img
+                  src={coinMeta.logo}
+                  alt={coinMeta.name}
+                  className="w-10 h-10 rounded-full"
+                />
+              ) : (
+                <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${coinMeta.gradient} flex items-center justify-center`}>
+                  <span className="text-white font-bold text-sm">
+                    {coinMeta.symbol.charAt(0)}
+                  </span>
+                </div>
+              )}
+              <div>
+                <h2 className="text-lg font-bold text-black">{strategy.displayName}</h2>
+                <p className="text-xs text-gray-500">{strategy.category}</p>
+              </div>
+            </div>
+
             {activeTab === 'subscribe' ? (
               <div className="space-y-6">
                 {/* Lock Period Selector */}

@@ -65,6 +65,23 @@ export interface ApyHistory {
   timestamp: string;
 }
 
+// Faucet types
+export interface FaucetRequest {
+  id: string;
+  walletAddress: string;
+  amount: number;
+  txHash?: string;
+  requestedAt: string;
+}
+
+export interface FaucetResponse {
+  success: boolean;
+  amount?: number;
+  txHash?: string;
+  cooldownUntil?: string;
+  error?: string;
+}
+
 // API Error class
 export class ApiError extends Error {
   constructor(
@@ -77,9 +94,18 @@ export class ApiError extends Error {
 }
 
 // Generic fetch wrapper with error handling
-async function fetchApi<T>(endpoint: string): Promise<T> {
+async function fetchApi<T>(
+  endpoint: string,
+  options?: RequestInit
+): Promise<T> {
   try {
-    const response = await fetch(`${API_BASE_URL}${endpoint}`);
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...options?.headers,
+      },
+      ...options,
+    });
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
@@ -140,4 +166,18 @@ export const strategiesApi = {
 // Health check
 export const healthApi = {
   check: () => fetchApi<{ status: string; timestamp: string }>('/health'),
+};
+
+// Faucet API
+export const faucetApi = {
+  // Request mockIDRX tokens from faucet
+  requestTokens: (walletAddress: string) =>
+    fetchApi<FaucetResponse>('/faucet/request', {
+      method: 'POST',
+      body: JSON.stringify({ walletAddress }),
+    }),
+
+  // Get faucet request history for a wallet
+  getHistory: (walletAddress: string) =>
+    fetchApi<FaucetRequest[]>(`/faucet/history/${walletAddress}`),
 };

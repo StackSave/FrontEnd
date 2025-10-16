@@ -1,8 +1,9 @@
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Shield, TrendingUp, Zap, Flame } from 'lucide-react'
+import { Flame } from 'lucide-react'
 import Link from 'next/link'
 import type { Strategy } from '@/lib/api'
+import { getCoinMetadata } from '@/lib/constants'
 
 interface VaultCardProps {
   vault: Strategy
@@ -10,21 +11,15 @@ interface VaultCardProps {
   layout?: 'horizontal' | 'square'
 }
 
-const strategyIcons = {
-  conservative: Shield,
-  balanced: TrendingUp,
-  growth: Zap
-} as const
-
-const strategyColors = {
-  conservative: { bg: 'bg-blue-50', text: 'text-blue-600', badge: 'border-blue-600 text-blue-600' },
-  balanced: { bg: 'bg-purple-50', text: 'text-purple-600', badge: 'border-purple-600 text-purple-600' },
-  growth: { bg: 'bg-orange-50', text: 'text-orange-600', badge: 'border-orange-600 text-orange-600' }
+const riskColors = {
+  Low: { bg: 'bg-blue-50', text: 'text-blue-600', badge: 'border-blue-600 text-blue-600' },
+  Medium: { bg: 'bg-purple-50', text: 'text-purple-600', badge: 'border-purple-600 text-purple-600' },
+  Higher: { bg: 'bg-orange-50', text: 'text-orange-600', badge: 'border-orange-600 text-orange-600' }
 } as const
 
 export function VaultCard({ vault, compact = false, layout = 'square' }: VaultCardProps) {
-  const Icon = strategyIcons[vault.name as keyof typeof strategyIcons] || Shield
-  const colors = strategyColors[vault.name as keyof typeof strategyColors] || strategyColors.conservative
+  const coinMeta = getCoinMetadata(vault.name)
+  const colors = riskColors[vault.riskLevel as keyof typeof riskColors] || riskColors.Low
 
   if (layout === 'horizontal') {
     return (
@@ -34,9 +29,20 @@ export function VaultCard({ vault, compact = false, layout = 'square' }: VaultCa
             <div className="flex items-center justify-between gap-4">
               {/* Left: Vault Info */}
               <div className="flex items-center gap-4 min-w-0 flex-1">
-                <div className={`p-3 rounded-lg ${colors.bg} flex-shrink-0`}>
-                  <Icon className={`h-6 w-6 ${colors.text}`} />
-                </div>
+                {/* Coin Logo */}
+                {coinMeta.logo ? (
+                  <img
+                    src={coinMeta.logo}
+                    alt={coinMeta.name}
+                    className="w-12 h-12 rounded-full flex-shrink-0"
+                  />
+                ) : (
+                  <div className={`w-12 h-12 rounded-full bg-gradient-to-br ${coinMeta.gradient} flex items-center justify-center flex-shrink-0`}>
+                    <span className="text-white font-bold text-lg">
+                      {coinMeta.symbol.charAt(0)}
+                    </span>
+                  </div>
+                )}
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 mb-1">
                     <h3 className="text-lg font-bold text-black truncate">
@@ -127,9 +133,20 @@ export function VaultCard({ vault, compact = false, layout = 'square' }: VaultCa
           {/* Header */}
           <div className="flex items-start justify-between mb-4">
             <div className="flex items-center gap-3">
-              <div className={`p-3 rounded-lg ${colors.bg}`}>
-                <Icon className={`h-6 w-6 ${colors.text}`} />
-              </div>
+              {/* Coin Logo */}
+              {coinMeta.logo ? (
+                <img
+                  src={coinMeta.logo}
+                  alt={coinMeta.name}
+                  className="w-12 h-12 rounded-full"
+                />
+              ) : (
+                <div className={`w-12 h-12 rounded-full bg-gradient-to-br ${coinMeta.gradient} flex items-center justify-center`}>
+                  <span className="text-white font-bold text-lg">
+                    {coinMeta.symbol.charAt(0)}
+                  </span>
+                </div>
+              )}
               <div>
                 <div className="flex items-center gap-2">
                   <h3 className="text-lg font-bold text-black">{vault.displayName}</h3>
